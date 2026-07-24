@@ -1,59 +1,65 @@
 import 'package:flutter/material.dart';
 
+import 'core/theme/app_theme.dart';
+import 'features/act_one/presentation/screens/mystery_intro_screen.dart';
+import 'features/act_one/presentation/screens/identity_screen.dart';
+
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+
+  runApp(const AnniversaryExperienceApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class AnniversaryExperienceApp extends StatelessWidget {
+  const AnniversaryExperienceApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'Nossa História',
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const HelloWordScreen(),
-    );
-  }
-}
-
-class HelloWordScreen extends StatelessWidget {
-  const HelloWordScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
-        child: Text(
-          'Hello Word!',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
+      theme: AppTheme.dark,
+     home: Builder(
+  builder: (context) {
+    return MysteryIntroScreen(
+      onFinished: () {
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder<void>(
+            transitionDuration: const Duration(
+              milliseconds: 1800,
+            ),
+            reverseTransitionDuration: const Duration(
+              milliseconds: 1800,
+            ),
+            pageBuilder: (
+              context,
+              animation,
+              secondaryAnimation,
+            ) {
+              return const IdentityScreen();
+            },
+            transitionsBuilder: (
+              context,
+              animation,
+              secondaryAnimation,
+              child,
+            ) {
+              return FadeTransition(
+                opacity: CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeInOut,
+                ),
+                child: child,
+              );
+            },
           ),
-          textAlign: TextAlign.center,
-        ),
-      ),
+        );
+      },
+    );
+  },
+),
     );
   }
+
+  
 }
