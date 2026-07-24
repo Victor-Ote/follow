@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 enum IdentityScreenStage { identification, rejected, welcome, finished }
 
 class IdentityScreen extends StatefulWidget {
-  const IdentityScreen({super.key});
+  const IdentityScreen({required this.onFinished, super.key});
+
+  final VoidCallback onFinished;
 
   @override
   State<IdentityScreen> createState() => _IdentityScreenState();
@@ -135,6 +137,8 @@ class _IdentityScreenState extends State<IdentityScreen> {
     setState(() {
       _stage = IdentityScreenStage.finished;
     });
+
+    widget.onFinished();
   }
 
   Future<void> _showWelcomeMessage(String message) async {
