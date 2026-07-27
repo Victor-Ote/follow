@@ -17,7 +17,7 @@ class BabelBookCoordinates {
 }
 
 const babelBookCoordinates = BabelBookCoordinates(
-  libraryUrl: 'https://...',
+  libraryUrl: 'https://libraryofbabel.info/',
   wall: '1',
   shelf: '2',
   volume: '3',
