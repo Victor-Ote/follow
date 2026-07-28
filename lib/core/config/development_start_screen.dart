@@ -4,6 +4,7 @@ enum DevelopmentStartScreen {
   babelIntro,
   babelLibrary,
   bookCoordinates,
+  bookRevelation,
 }
 
 const DevelopmentStartScreen developmentStartScreen =

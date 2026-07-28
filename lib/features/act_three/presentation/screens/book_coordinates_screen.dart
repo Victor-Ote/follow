@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/babel_book_coordinates.dart';
+import 'book_revelation_screen.dart';
 
 class BookCoordinatesScreen extends StatefulWidget {
-  const BookCoordinatesScreen({super.key});
+  const BookCoordinatesScreen({this.onFinished, super.key});
+
+  final VoidCallback? onFinished;
 
   @override
   State<BookCoordinatesScreen> createState() => _BookCoordinatesScreenState();
@@ -24,6 +27,8 @@ class _BookCoordinatesScreenState extends State<BookCoordinatesScreen>
   bool _isOpeningLibrary = false;
   bool _isWaitingForLibraryReturn = false;
   bool _turnPageButtonVisible = false;
+  bool _isOpeningRevelation = false;
+  bool _revelationSequenceHasPlayed = false;
 
   @override
   void initState() {
@@ -182,6 +187,54 @@ class _BookCoordinatesScreenState extends State<BookCoordinatesScreen>
     }
   }
 
+  Future<void> _openBookRevelation() async {
+    if (_isOpeningRevelation) {
+      return;
+    }
+
+    final shouldAnimateSequence = !_revelationSequenceHasPlayed;
+
+    setState(() {
+      _isOpeningRevelation = true;
+      _contentVisible = false;
+    });
+
+    _revelationSequenceHasPlayed = true;
+
+    await Future<void>.delayed(_fadeDuration);
+
+    if (!mounted) {
+      return;
+    }
+
+    await Navigator.of(context).push<void>(
+      PageRouteBuilder<void>(
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+        pageBuilder: (routeContext, animation, secondaryAnimation) {
+          return BookRevelationScreen(
+            animateSequence: shouldAnimateSequence,
+            onConsultAgain: () {
+              Navigator.of(routeContext).pop();
+            },
+            onNextChapter: () {
+              widget.onFinished?.call();
+            },
+          );
+        },
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isOpeningRevelation = false;
+      _contentVisible = true;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.sizeOf(context);
@@ -317,7 +370,9 @@ class _BookCoordinatesScreenState extends State<BookCoordinatesScreen>
                         child: SizedBox(
                           height: 52,
                           child: FilledButton(
-                            onPressed: null,
+                            onPressed: _isOpeningRevelation
+                                ? null
+                                : _openBookRevelation,
                             child: const Text(
                               'Virar a página',
                               style: TextStyle(

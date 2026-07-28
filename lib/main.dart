@@ -11,6 +11,7 @@ import 'features/act_two/presentation/screens/act_transition_screen.dart';
 import 'features/act_two/presentation/screens/babel_intro_screen.dart';
 import 'features/act_two/presentation/screens/babel_library_screen.dart';
 import 'features/act_three/presentation/screens/book_coordinates_screen.dart';
+import 'features/act_three/presentation/screens/book_revelation_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +50,13 @@ class AnniversaryExperienceApp extends StatelessWidget {
 
                   case DevelopmentStartScreen.bookCoordinates:
                     return const BookCoordinatesScreen();
+
+                  case DevelopmentStartScreen.bookRevelation:
+                    return BookRevelationScreen(
+                      animateSequence: true,
+                      onConsultAgain: () {},
+                      onNextChapter: () {},
+                    );
 
                   case DevelopmentStartScreen.normalExperience:
                     return child ?? const SizedBox.shrink();
