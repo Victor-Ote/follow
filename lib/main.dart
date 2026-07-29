@@ -15,6 +15,7 @@ import 'features/act_three/presentation/screens/book_revelation_screen.dart';
 import 'features/act_four/presentation/screens/records_intro_screen.dart';
 import 'features/act_four/presentation/screens/first_record_screen.dart';
 import 'features/act_four/presentation/screens/records_found_screen.dart';
+import 'features/act_five/presentation/screens/universe_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,6 +45,9 @@ class AnniversaryExperienceApp extends StatelessWidget {
                 switch (developmentStartScreen) {
                   case DevelopmentStartScreen.recordsFound:
                     return const RecordsFoundScreen();
+
+                  case DevelopmentStartScreen.universeCanvas:
+                    return const UniverseScreen();
                   case DevelopmentStartScreen.actTwoTransition:
                     return ActTransitionScreen(onFinished: () {});
 
