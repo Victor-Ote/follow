@@ -5,7 +5,9 @@ enum DevelopmentStartScreen {
   babelLibrary,
   bookCoordinates,
   bookRevelation,
+  firstRecord,
+  recordsFound,
 }
 
 const DevelopmentStartScreen developmentStartScreen =
-    DevelopmentStartScreen.bookCoordinates;
+    DevelopmentStartScreen.recordsFound;

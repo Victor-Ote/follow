@@ -12,6 +12,9 @@ import 'features/act_two/presentation/screens/babel_intro_screen.dart';
 import 'features/act_two/presentation/screens/babel_library_screen.dart';
 import 'features/act_three/presentation/screens/book_coordinates_screen.dart';
 import 'features/act_three/presentation/screens/book_revelation_screen.dart';
+import 'features/act_four/presentation/screens/records_intro_screen.dart';
+import 'features/act_four/presentation/screens/first_record_screen.dart';
+import 'features/act_four/presentation/screens/records_found_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +42,8 @@ class AnniversaryExperienceApp extends StatelessWidget {
             return MaterialPageRoute<void>(
               builder: (context) {
                 switch (developmentStartScreen) {
+                  case DevelopmentStartScreen.recordsFound:
+                    return const RecordsFoundScreen();
                   case DevelopmentStartScreen.actTwoTransition:
                     return ActTransitionScreen(onFinished: () {});
 
@@ -49,15 +54,184 @@ class AnniversaryExperienceApp extends StatelessWidget {
                     return BabelLibraryScreen(onFinished: () {});
 
                   case DevelopmentStartScreen.bookCoordinates:
-                    return const BookCoordinatesScreen();
+                    return BookCoordinatesScreen(
+                      onFinished: () {
+                        Navigator.of(context).pushReplacement(
+                          PageRouteBuilder<void>(
+                            transitionDuration: const Duration(
+                              milliseconds: 1400,
+                            ),
+                            reverseTransitionDuration: const Duration(
+                              milliseconds: 1400,
+                            ),
+                            pageBuilder: (context, animation, secondaryAnimation) {
+                              return RecordsIntroScreen(
+                                onFinished: () {
+                                  Navigator.of(context).pushReplacement(
+                                    PageRouteBuilder<void>(
+                                      transitionDuration: const Duration(
+                                        milliseconds: 1800,
+                                      ),
+                                      reverseTransitionDuration: const Duration(
+                                        milliseconds: 1800,
+                                      ),
+                                      pageBuilder:
+                                          (
+                                            context,
+                                            animation,
+                                            secondaryAnimation,
+                                          ) {
+                                            return FirstRecordScreen(
+                                              onReturnedFromRecord: () {
+                                                Navigator.of(
+                                                  context,
+                                                ).pushReplacement(
+                                                  PageRouteBuilder<void>(
+                                                    transitionDuration:
+                                                        Duration.zero,
+                                                    reverseTransitionDuration:
+                                                        Duration.zero,
+                                                    pageBuilder:
+                                                        (
+                                                          context,
+                                                          animation,
+                                                          secondaryAnimation,
+                                                        ) {
+                                                          return const RecordsFoundScreen();
+                                                        },
+                                                  ),
+                                                );
+                                              },
+                                            );
+                                          },
+                                      transitionsBuilder:
+                                          (
+                                            context,
+                                            animation,
+                                            secondaryAnimation,
+                                            child,
+                                          ) {
+                                            return FadeTransition(
+                                              opacity: CurvedAnimation(
+                                                parent: animation,
+                                                curve: Curves.easeInOut,
+                                              ),
+                                              child: child,
+                                            );
+                                          },
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                            transitionsBuilder:
+                                (
+                                  context,
+                                  animation,
+                                  secondaryAnimation,
+                                  child,
+                                ) {
+                                  return FadeTransition(
+                                    opacity: CurvedAnimation(
+                                      parent: animation,
+                                      curve: Curves.easeInOut,
+                                    ),
+                                    child: child,
+                                  );
+                                },
+                          ),
+                        );
+                      },
+                    );
 
                   case DevelopmentStartScreen.bookRevelation:
                     return BookRevelationScreen(
                       animateSequence: true,
                       onConsultAgain: () {},
-                      onNextChapter: () {},
+                      onNextChapter: () {
+                        Navigator.of(context).pushReplacement(
+                          PageRouteBuilder<void>(
+                            transitionDuration: const Duration(
+                              milliseconds: 1400,
+                            ),
+                            reverseTransitionDuration: const Duration(
+                              milliseconds: 1400,
+                            ),
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) {
+                                  return RecordsIntroScreen(
+                                    onFinished: () {
+                                      Navigator.of(context).pushReplacement(
+                                        PageRouteBuilder<void>(
+                                          transitionDuration: const Duration(
+                                            milliseconds: 1800,
+                                          ),
+                                          reverseTransitionDuration:
+                                              const Duration(
+                                                milliseconds: 1800,
+                                              ),
+                                          pageBuilder:
+                                              (
+                                                context,
+                                                animation,
+                                                secondaryAnimation,
+                                              ) {
+                                                return const FirstRecordScreen();
+                                              },
+                                          transitionsBuilder:
+                                              (
+                                                context,
+                                                animation,
+                                                secondaryAnimation,
+                                                child,
+                                              ) {
+                                                return FadeTransition(
+                                                  opacity: CurvedAnimation(
+                                                    parent: animation,
+                                                    curve: Curves.easeInOut,
+                                                  ),
+                                                  child: child,
+                                                );
+                                              },
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                            transitionsBuilder:
+                                (
+                                  context,
+                                  animation,
+                                  secondaryAnimation,
+                                  child,
+                                ) {
+                                  return FadeTransition(
+                                    opacity: CurvedAnimation(
+                                      parent: animation,
+                                      curve: Curves.easeInOut,
+                                    ),
+                                    child: child,
+                                  );
+                                },
+                          ),
+                        );
+                      },
                     );
-
+                  case DevelopmentStartScreen.firstRecord:
+                    return FirstRecordScreen(
+                      onReturnedFromRecord: () {
+                        Navigator.of(context).pushReplacement(
+                          PageRouteBuilder<void>(
+                            transitionDuration: Duration.zero,
+                            reverseTransitionDuration: Duration.zero,
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) {
+                                  return const RecordsFoundScreen();
+                                },
+                          ),
+                        );
+                      },
+                    );
                   case DevelopmentStartScreen.normalExperience:
                     return child ?? const SizedBox.shrink();
                 }
@@ -138,7 +312,87 @@ class AnniversaryExperienceApp extends StatelessWidget {
                                                                     animation,
                                                                     secondaryAnimation,
                                                                   ) {
-                                                                    return const BookCoordinatesScreen();
+                                                                    return BookCoordinatesScreen(
+                                                                      onFinished: () {
+                                                                        Navigator.of(
+                                                                          context,
+                                                                        ).pushReplacement(
+                                                                          PageRouteBuilder<
+                                                                            void
+                                                                          >(
+                                                                            transitionDuration: const Duration(
+                                                                              milliseconds: 1400,
+                                                                            ),
+                                                                            reverseTransitionDuration: const Duration(
+                                                                              milliseconds: 1400,
+                                                                            ),
+                                                                            pageBuilder:
+                                                                                (
+                                                                                  context,
+                                                                                  animation,
+                                                                                  secondaryAnimation,
+                                                                                ) {
+                                                                                  return RecordsIntroScreen(
+                                                                                    onFinished: () {
+                                                                                      Navigator.of(
+                                                                                        context,
+                                                                                      ).pushReplacement(
+                                                                                        PageRouteBuilder<
+                                                                                          void
+                                                                                        >(
+                                                                                          transitionDuration: const Duration(
+                                                                                            milliseconds: 1800,
+                                                                                          ),
+                                                                                          reverseTransitionDuration: const Duration(
+                                                                                            milliseconds: 1800,
+                                                                                          ),
+                                                                                          pageBuilder:
+                                                                                              (
+                                                                                                context,
+                                                                                                animation,
+                                                                                                secondaryAnimation,
+                                                                                              ) {
+                                                                                                return const FirstRecordScreen();
+                                                                                              },
+                                                                                          transitionsBuilder:
+                                                                                              (
+                                                                                                context,
+                                                                                                animation,
+                                                                                                secondaryAnimation,
+                                                                                                child,
+                                                                                              ) {
+                                                                                                return FadeTransition(
+                                                                                                  opacity: CurvedAnimation(
+                                                                                                    parent: animation,
+                                                                                                    curve: Curves.easeInOut,
+                                                                                                  ),
+                                                                                                  child: child,
+                                                                                                );
+                                                                                              },
+                                                                                        ),
+                                                                                      );
+                                                                                    },
+                                                                                  );
+                                                                                },
+                                                                            transitionsBuilder:
+                                                                                (
+                                                                                  context,
+                                                                                  animation,
+                                                                                  secondaryAnimation,
+                                                                                  child,
+                                                                                ) {
+                                                                                  return FadeTransition(
+                                                                                    opacity: CurvedAnimation(
+                                                                                      parent: animation,
+                                                                                      curve: Curves.easeInOut,
+                                                                                    ),
+                                                                                    child: child,
+                                                                                  );
+                                                                                },
+                                                                          ),
+                                                                        );
+                                                                      },
+                                                                    );
                                                                   },
                                                               transitionsBuilder:
                                                                   (
