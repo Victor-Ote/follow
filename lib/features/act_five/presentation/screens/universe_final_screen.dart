@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../data/universe_stars_data.dart';
 
+import '../../../act_six/presentation/screens/closing_intro_screen.dart';
+
 enum _UniverseFinalContentType { phrase, number, starsLabel, closing }
 
 class UniverseFinalScreen extends StatefulWidget {
@@ -92,12 +94,23 @@ class _UniverseFinalScreenState extends State<UniverseFinalScreen> {
       blackDuration: const Duration(milliseconds: 0),
     );
 
+    if (!mounted) {
+      return;
+    }
+
     /*
-     * Depois do último fade, a tela permanece
-     * completamente preta.
-     *
-     * Não existe ATO VI.
-     */
+ * O último conteúdo já terminou seu fade-out.
+ * A próxima tela começa também sobre preto.
+ */
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder<void>(
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return const ClosingIntroScreen();
+        },
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
   }
 
   Future<void> _showContent({

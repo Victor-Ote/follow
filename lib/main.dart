@@ -18,6 +18,8 @@ import 'features/act_four/presentation/screens/first_record_screen.dart';
 import 'features/act_four/presentation/screens/records_found_screen.dart';
 import 'features/act_five/presentation/screens/universe_screen.dart';
 import 'features/act_five/presentation/screens/universe_intro_screen.dart';
+import 'features/act_six/presentation/screens/closing_intro_screen.dart';
+import 'features/act_six/presentation/screens/closing_final_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,6 +67,12 @@ class AnniversaryExperienceApp extends StatelessWidget {
 
                   case DevelopmentStartScreen.babelLibrary:
                     return BabelLibraryScreen(onFinished: () {});
+
+                  case DevelopmentStartScreen.closingIntro:
+                    return const ClosingIntroScreen();
+
+                  case DevelopmentStartScreen.closingFinal:
+                    return const ClosingFinalScreen();
 
                   case DevelopmentStartScreen.bookCoordinates:
                     return BookCoordinatesScreen(

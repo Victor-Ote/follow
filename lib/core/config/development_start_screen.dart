@@ -10,7 +10,9 @@ enum DevelopmentStartScreen {
   universeIntro,
   universeCanvas,
   universeFinal,
+  closingIntro,
+  closingFinal,
 }
 
 const DevelopmentStartScreen developmentStartScreen =
-    DevelopmentStartScreen.universeIntro;
+    DevelopmentStartScreen.closingFinal;
