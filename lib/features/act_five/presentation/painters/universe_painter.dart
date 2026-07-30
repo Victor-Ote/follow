@@ -1,19 +1,29 @@
 import 'package:flutter/material.dart';
 import '../../data/universe_star.dart';
+import '../models/universe_star_visual.dart';
+import 'dart:math' as math;
 
 class UniversePainter extends CustomPainter {
   UniversePainter({
     required this.stars,
+    required this.starVisuals,
     required this.starOpacities,
     required this.panOffset,
     required this.scale,
-    required Listenable repaint,
-  }) : super(repaint: repaint);
+    required this.skyAnimation,
+  }) : super(repaint: skyAnimation);
 
   final List<UniverseStar> stars;
+
+  final Map<String, UniverseStarVisual> starVisuals;
+
   final Map<String, double> starOpacities;
+
   final Offset panOffset;
   final double scale;
+
+  final Animation<double> skyAnimation;
+
   @override
   void paint(Canvas canvas, Size size) {
     final backgroundPaint = Paint()
@@ -43,7 +53,9 @@ class UniversePainter extends CustomPainter {
     for (final star in stars) {
       final opacity = starOpacities[star.id] ?? 0;
 
-      if (opacity <= 0) {
+      final visual = starVisuals[star.id];
+
+      if (opacity <= 0 || visual == null) {
         continue;
       }
 
@@ -56,6 +68,7 @@ class UniversePainter extends CustomPainter {
       _drawStar(
         canvas: canvas,
         star: star,
+        visual: visual,
         position: starPosition,
         opacity: opacity,
       );
@@ -67,33 +80,74 @@ class UniversePainter extends CustomPainter {
   void _drawStar({
     required Canvas canvas,
     required UniverseStar star,
+    required UniverseStarVisual visual,
     required Offset position,
     required double opacity,
   }) {
-    final starRadius = star.size / 2;
+    final revealOpacity = opacity.clamp(0.0, 1.0);
+
+    var twinkleOpacity = 1.0;
+
+    if (visual.twinkles) {
+      final angle =
+          (skyAnimation.value * math.pi * 2 * visual.twinkleCycles) +
+          visual.twinklePhase;
+
+      /*
+     * Converte o seno de -1...1 para 0...1.
+     */
+      final normalizedPulse = (math.sin(angle) + 1) / 2;
+
+      final easedPulse = Curves.easeInOut.transform(normalizedPulse);
+
+      twinkleOpacity =
+          visual.minimumOpacity + (1 - visual.minimumOpacity) * easedPulse;
+    }
+
+    final combinedOpacity = (revealOpacity * twinkleOpacity).clamp(0.0, 1.0);
+
+    final haloIntensity = visual.twinkles ? 0.60 + twinkleOpacity * 0.40 : 1.0;
+
+    final starRadius = visual.size / 2;
 
     final outerHaloPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.055)
+      ..color = visual.color.withValues(
+        alpha: 0.085 * combinedOpacity * haloIntensity,
+      )
       ..style = PaintingStyle.fill;
 
     final innerHaloPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.14)
+      ..color = visual.color.withValues(
+        alpha: 0.22 * combinedOpacity * haloIntensity,
+      )
       ..style = PaintingStyle.fill;
 
     final corePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.92)
+      ..color = visual.color.withValues(alpha: 0.94 * combinedOpacity)
       ..style = PaintingStyle.fill;
 
-    canvas.drawCircle(position, starRadius * 3, outerHaloPaint);
+    final centralLightPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.76 * combinedOpacity)
+      ..style = PaintingStyle.fill;
 
-    canvas.drawCircle(position, starRadius * 1.7, innerHaloPaint);
+    canvas.drawCircle(position, starRadius * 3.2, outerHaloPaint);
+
+    canvas.drawCircle(position, starRadius * 1.75, innerHaloPaint);
 
     canvas.drawCircle(position, starRadius, corePaint);
+
+    /*
+   * Pequeno núcleo branco, preservando a
+   * aparência luminosa mesmo nas estrelas
+   * azuladas ou amareladas.
+   */
+    canvas.drawCircle(position, starRadius * 0.34, centralLightPaint);
   }
 
   @override
   bool shouldRepaint(covariant UniversePainter oldDelegate) {
     return oldDelegate.stars != stars ||
+        oldDelegate.starVisuals != starVisuals ||
         oldDelegate.starOpacities != starOpacities ||
         oldDelegate.panOffset != panOffset ||
         oldDelegate.scale != scale;

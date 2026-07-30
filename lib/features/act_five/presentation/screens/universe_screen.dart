@@ -2,12 +2,18 @@ import 'package:flutter/material.dart';
 
 import '../painters/universe_painter.dart';
 import '../../data/universe_stars_data.dart';
+import '../models/universe_star_visual.dart';
+import 'universe_final_screen.dart';
 
 import '../../data/universe_star.dart';
 import '../widgets/star_moment_overlay.dart';
 
+import 'dart:math' as math;
+
 class UniverseScreen extends StatefulWidget {
-  const UniverseScreen({super.key});
+  const UniverseScreen({this.onFinished, super.key});
+
+  final VoidCallback? onFinished;
 
   @override
   State<UniverseScreen> createState() => _UniverseScreenState();
@@ -17,6 +23,29 @@ class _UniverseScreenState extends State<UniverseScreen>
     with SingleTickerProviderStateMixin {
   static const double _minimumScale = 0.65;
   static const double _maximumScale = 2.60;
+  static const Duration _turnPageButtonFadeDuration = Duration(
+    milliseconds: 900,
+  );
+  static const int _starsRequiredToTurnPage = 3;
+
+  static const Duration _screenFadeOutDuration = Duration(milliseconds: 1600);
+
+  static const List<Color> _starColorPalette = [
+    // Branco neutro — aparece mais vezes.
+    Color(0xFFF4F4F1),
+    Color(0xFFF4F4F1),
+    Color(0xFFF7F5EE),
+
+    // Azul muito discreto.
+    Color(0xFFD6E9FF),
+    Color(0xFFC9E1FF),
+
+    // Amarelo e dourado muito suaves.
+    Color(0xFFFFE7B8),
+    Color(0xFFF8EED7),
+  ];
+
+  static const List<double> _twinkleCycleOptions = [1, 2, 3, 4, 5, 6];
 
   static const double _universeEdgePadding = 580; //tamanho da borda do universo
 
@@ -34,8 +63,18 @@ class _UniverseScreenState extends State<UniverseScreen>
 
   Offset _panOffset = Offset.zero;
   double _scale = 1;
+  final Set<String> _openedStarIds = {};
+
+  bool _turnPageButtonMounted = false;
+  bool _turnPageButtonVisible = false;
+
+  bool _screenVisible = true;
+  bool _isLeaving = false;
+
+  late final Map<String, UniverseStarVisual> _starVisuals;
 
   UniverseStar? _selectedStar;
+  bool _selectedStarModalBelow = false;
 
   late final AnimationController _starFadeController;
 
@@ -55,18 +94,92 @@ class _UniverseScreenState extends State<UniverseScreen>
   double _gestureStartScale = 1;
   Offset _gestureStartUniversePoint = Offset.zero;
 
+  Map<String, UniverseStarVisual> _createRandomStarVisuals() {
+    if (universeStars.isEmpty) {
+      return {};
+    }
+
+    final random = math.Random();
+
+    /*
+   * Em cada abertura, sorteamos entre
+   * aproximadamente 30% e 45% das estrelas
+   * para receberem pulsação.
+   */
+    final shuffledStars = [...universeStars]..shuffle(random);
+
+    final minimumTwinkleCount = math.max(
+      1,
+      (universeStars.length * 0.30).round(),
+    );
+
+    final maximumTwinkleCount = math.min(
+      universeStars.length,
+      math.max(minimumTwinkleCount, (universeStars.length * 0.45).round()),
+    );
+
+    final twinkleCount =
+        minimumTwinkleCount +
+        random.nextInt(maximumTwinkleCount - minimumTwinkleCount + 1);
+
+    final twinklingStarIds = shuffledStars
+        .take(twinkleCount)
+        .map((star) => star.id)
+        .toSet();
+
+    final visuals = <String, UniverseStarVisual>{};
+
+    for (final star in universeStars) {
+      final twinkles = twinklingStarIds.contains(star.id);
+
+      visuals[star.id] = UniverseStarVisual(
+        size: (star.size * (1.35 + random.nextDouble() * 0.85))
+            .clamp(3.4, 8.8)
+            .toDouble(),
+
+        color: _starColorPalette[random.nextInt(_starColorPalette.length)],
+
+        twinkles: twinkles,
+
+        /*
+       * As estrelas pulsantes poderão cair
+       * entre 22% e 50% da opacidade máxima.
+       *
+       * As estrelas estáticas permanecem em 100%.
+       */
+        minimumOpacity: twinkles ? 0.22 + random.nextDouble() * 0.28 : 1,
+
+        twinklePhase: random.nextDouble() * math.pi * 2,
+
+        twinkleCycles:
+            _twinkleCycleOptions[random.nextInt(_twinkleCycleOptions.length)],
+      );
+    }
+
+    return visuals;
+  }
+
   @override
   void initState() {
     super.initState();
 
+    _starVisuals = _createRandomStarVisuals();
+
     _starFadeClock.start();
 
+    /*
+   * Este controlador passa a funcionar como
+   * relógio tanto do fade de descoberta quanto
+   * do brilho constante das estrelas.
+   */
     _starFadeController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 1),
+      duration: const Duration(seconds: 12),
     );
 
     _starFadeController.addListener(_updateStarFades);
+
+    _starFadeController.repeat();
   }
 
   @override
@@ -260,9 +373,56 @@ class _UniverseScreenState extends State<UniverseScreen>
       return;
     }
 
+    final selectedStarScreenPosition = _universePointToScreen(
+      universePoint: Offset(closestStar.x, closestStar.y),
+      viewportSize: viewportSize,
+    );
+
+    /*
+ * Caso a estrela esteja muito próxima do topo
+ * no momento do clique, o modal nasce abaixo.
+ *
+ * Essa escolha permanece fixa enquanto aquele
+ * modal estiver aberto.
+ */
+    final shouldPlaceBelow =
+        selectedStarScreenPosition.dy < viewportSize.height * 0.32;
+
+    final isNewlyOpenedStar = _openedStarIds.add(closestStar.id);
+
+    final shouldUnlockTurnPage =
+        isNewlyOpenedStar &&
+        !_turnPageButtonMounted &&
+        _openedStarIds.length >= _starsRequiredToTurnPage;
+
     setState(() {
       _selectedStar = closestStar;
+      _selectedStarModalBelow = shouldPlaceBelow;
+
+      if (shouldUnlockTurnPage) {
+        /*
+     * Primeiro inserimos o botão invisível
+     * na árvore de widgets.
+     */
+        _turnPageButtonMounted = true;
+      }
     });
+
+    if (shouldUnlockTurnPage) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _isLeaving || _turnPageButtonVisible) {
+          return;
+        }
+
+        setState(() {
+          /*
+       * No frame seguinte alteramos a opacidade,
+       * garantindo que o fade seja executado.
+       */
+          _turnPageButtonVisible = true;
+        });
+      });
+    }
   }
 
   void _closeSelectedStar() {
@@ -272,15 +432,62 @@ class _UniverseScreenState extends State<UniverseScreen>
 
     setState(() {
       _selectedStar = null;
+      _selectedStarModalBelow = false;
     });
   }
 
-  void _updateStarFades() {
-    if (_starRevealStartedAt.isEmpty) {
-      if (_starFadeController.isAnimating) {
-        _starFadeController.stop();
-      }
+  Future<void> _finishAct() async {
+    if (_isLeaving || !_turnPageButtonVisible) {
+      return;
+    }
 
+    setState(() {
+      _isLeaving = true;
+      _screenVisible = false;
+    });
+
+    await Future<void>.delayed(_screenFadeOutDuration);
+
+    if (!mounted) {
+      return;
+    }
+
+    /*
+   * Quando um fluxo externo fornecer callback,
+   * ele continuará tendo prioridade.
+   */
+    if (widget.onFinished != null) {
+      widget.onFinished!.call();
+      return;
+    }
+
+    /*
+   * Quando UniverseScreen estiver sendo usada
+   * diretamente, avançamos para a tela final.
+   *
+   * Não adicionamos outra transição porque
+   * o universo já terminou completamente preto.
+   */
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder<void>(
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return const UniverseFinalScreen();
+        },
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
+  }
+
+  void _updateStarFades() {
+    /*
+   * Mesmo sem estrelas executando o fade
+   * inicial, não paramos o controlador.
+   *
+   * Ele também é responsável pelo brilho
+   * constante das estrelas.
+   */
+    if (_starRevealStartedAt.isEmpty) {
       return;
     }
 
@@ -307,9 +514,10 @@ class _UniverseScreenState extends State<UniverseScreen>
       _starRevealStartedAt.remove(starId);
     }
 
-    if (_starRevealStartedAt.isEmpty && _starFadeController.isAnimating) {
-      _starFadeController.stop();
-    }
+    /*
+   * Não adicionar _starFadeController.stop()
+   * neste método.
+   */
   }
 
   void _revealStars(Iterable<dynamic> stars) {
@@ -494,69 +702,114 @@ class _UniverseScreenState extends State<UniverseScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final viewportSize = Size(
-            constraints.maxWidth,
-            constraints.maxHeight,
-          );
+      body: AnimatedOpacity(
+        opacity: _screenVisible ? 1 : 0,
+        duration: _screenFadeOutDuration,
+        curve: Curves.easeInOut,
+        child: IgnorePointer(
+          ignoring: _isLeaving,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final viewportSize = Size(
+                constraints.maxWidth,
+                constraints.maxHeight,
+              );
 
-          _scheduleInitialReveal(viewportSize);
+              _scheduleInitialReveal(viewportSize);
 
-          final selectedStar = _selectedStar;
-
-          final selectedStarScreenPosition = selectedStar == null
-              ? null
-              : _universePointToScreen(
-                  universePoint: Offset(selectedStar.x, selectedStar.y),
-                  viewportSize: viewportSize,
-                );
-
-          return Stack(
-            children: [
-              Positioned.fill(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTapUp: (details) {
-                    _handleStarTap(
-                      details: details,
+              final selectedStar = _selectedStar;
+              final selectedStarScreenPosition = selectedStar != null
+                  ? _universePointToScreen(
+                      universePoint: Offset(selectedStar.x, selectedStar.y),
                       viewportSize: viewportSize,
-                    );
-                  },
-                  onScaleStart: (details) {
-                    _handleScaleStart(details, viewportSize);
-                  },
-                  onScaleUpdate: (details) {
-                    _handleScaleUpdate(details, viewportSize);
-                  },
-                  child: RepaintBoundary(
-                    child: ClipRect(
-                      child: CustomPaint(
-                        painter: UniversePainter(
-                          stars: universeStars,
-                          starOpacities: _starOpacities,
-                          panOffset: _panOffset,
-                          scale: _scale,
-                          repaint: _starFadeController,
+                    )
+                  : null;
+              final modalScale = (_scale / _maximumScale)
+                  .clamp(0.0, 1.0)
+                  .toDouble();
+              return Stack(
+                children: [
+                  Positioned.fill(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTapUp: (details) {
+                        _handleStarTap(
+                          details: details,
+                          viewportSize: viewportSize,
+                        );
+                      },
+                      onScaleStart: (details) {
+                        _handleScaleStart(details, viewportSize);
+                      },
+                      onScaleUpdate: (details) {
+                        _handleScaleUpdate(details, viewportSize);
+                      },
+                      child: RepaintBoundary(
+                        child: ClipRect(
+                          child: CustomPaint(
+                            painter: UniversePainter(
+                              stars: universeStars,
+                              starVisuals: _starVisuals,
+                              starOpacities: _starOpacities,
+                              panOffset: _panOffset,
+                              scale: _scale,
+                              skyAnimation: _starFadeController,
+                            ),
+                            child: const SizedBox.expand(),
+                          ),
                         ),
-                        child: const SizedBox.expand(),
                       ),
                     ),
                   ),
-                ),
-              ),
-              if (selectedStar != null && selectedStarScreenPosition != null)
-                Positioned.fill(
-                  child: StarMomentOverlay(
-                    star: selectedStar,
-                    anchor: selectedStarScreenPosition,
-                    safePadding: MediaQuery.viewPaddingOf(context),
-                    onClose: _closeSelectedStar,
-                  ),
-                ),
-            ],
-          );
-        },
+                  if (selectedStar != null &&
+                      selectedStarScreenPosition != null)
+                    Positioned.fill(
+                      child: StarMomentOverlay(
+                        star: selectedStar,
+                        anchor: selectedStarScreenPosition,
+                        modalScale: modalScale,
+                        placeBelow: _selectedStarModalBelow,
+                        onClose: _closeSelectedStar,
+                      ),
+                    ),
+                  if (_turnPageButtonMounted)
+                    Positioned(
+                      right: 18 + MediaQuery.viewPaddingOf(context).right,
+                      bottom: 18 + MediaQuery.viewPaddingOf(context).bottom,
+                      child: IgnorePointer(
+                        ignoring: !_turnPageButtonVisible || _isLeaving,
+                        child: AnimatedOpacity(
+                          opacity: _turnPageButtonVisible ? 1 : 0,
+                          duration: _turnPageButtonFadeDuration,
+                          curve: Curves.easeInOut,
+                          child: FilledButton(
+                            onPressed: _isLeaving ? null : _finishAct,
+                            style: FilledButton.styleFrom(
+                              minimumSize: Size.zero,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            child: const Text(
+                              'Virar a página',
+                              style: TextStyle(
+                                fontFamily: 'CookieFont',
+                                fontSize: 17,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
       ),
     );
   }

@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
+import 'records_found_screen.dart';
+
 class FirstRecordScreen extends StatefulWidget {
   const FirstRecordScreen({this.onReturnedFromRecord, super.key});
 
@@ -92,7 +94,20 @@ class _FirstRecordScreenState extends State<FirstRecordScreen>
       return;
     }
 
-    widget.onReturnedFromRecord?.call();
+    if (widget.onReturnedFromRecord != null) {
+      widget.onReturnedFromRecord!.call();
+      return;
+    }
+
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder<void>(
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return const RecordsFoundScreen();
+        },
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
   }
 
   Future<void> _prepareScreen() async {

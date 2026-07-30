@@ -7,8 +7,10 @@ enum DevelopmentStartScreen {
   bookRevelation,
   firstRecord,
   recordsFound,
+  universeIntro,
   universeCanvas,
+  universeFinal,
 }
 
 const DevelopmentStartScreen developmentStartScreen =
-    DevelopmentStartScreen.universeCanvas;
+    DevelopmentStartScreen.universeIntro;

@@ -301,7 +301,7 @@ class _BookCoordinatesScreenState extends State<BookCoordinatesScreen>
                               ? _copyHexagon
                               : null,
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 15),
                         _CoordinateField(
                           label: 'Wall',
                           value: babelBookCoordinates.wall,

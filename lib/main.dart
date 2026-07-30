@@ -4,6 +4,7 @@ import 'core/theme/app_theme.dart';
 
 import 'package:flutter/foundation.dart';
 import 'core/config/development_start_screen.dart';
+import 'features/act_five/presentation/screens/universe_final_screen.dart';
 
 import 'features/act_one/presentation/screens/mystery_intro_screen.dart';
 import 'features/act_one/presentation/screens/identity_screen.dart';
@@ -16,6 +17,7 @@ import 'features/act_four/presentation/screens/records_intro_screen.dart';
 import 'features/act_four/presentation/screens/first_record_screen.dart';
 import 'features/act_four/presentation/screens/records_found_screen.dart';
 import 'features/act_five/presentation/screens/universe_screen.dart';
+import 'features/act_five/presentation/screens/universe_intro_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,8 +48,15 @@ class AnniversaryExperienceApp extends StatelessWidget {
                   case DevelopmentStartScreen.recordsFound:
                     return const RecordsFoundScreen();
 
+                  case DevelopmentStartScreen.universeIntro:
+                    return const UniverseIntroScreen();
+
                   case DevelopmentStartScreen.universeCanvas:
                     return const UniverseScreen();
+
+                  case DevelopmentStartScreen.universeFinal:
+                    return const UniverseFinalScreen();
+
                   case DevelopmentStartScreen.actTwoTransition:
                     return ActTransitionScreen(onFinished: () {});
 

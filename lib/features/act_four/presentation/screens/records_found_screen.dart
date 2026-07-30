@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../act_five/presentation/screens/universe_intro_screen.dart';
 
 import '../../data/babelia_records_data.dart';
 import '../widgets/babelia_reference_field.dart';
@@ -111,7 +112,31 @@ class _RecordsFoundScreenState extends State<RecordsFoundScreen> {
       return;
     }
 
-    widget.onFinished?.call();
+    if (!mounted) {
+      return;
+    }
+
+    /*
+ * Um callback externo continua tendo prioridade.
+ */
+    if (widget.onFinished != null) {
+      widget.onFinished!.call();
+      return;
+    }
+
+    /*
+ * Sem callback externo, o fluxo normal continua
+ * para a introdução do ATO V.
+ */
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder<void>(
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return const UniverseIntroScreen();
+        },
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
   }
 
   Future<void> _startRecordsSequence() async {
