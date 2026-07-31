@@ -81,7 +81,7 @@ class StarMomentOverlay extends StatelessWidget {
                               value: star.date,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: _MomentInformation(
                               label: 'Horário',

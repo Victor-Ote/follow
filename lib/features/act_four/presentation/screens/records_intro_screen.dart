@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
+import 'first_record_screen.dart';
 
 class RecordsIntroScreen extends StatefulWidget {
-  const RecordsIntroScreen({
-    required this.onFinished,
-    super.key,
-  });
+  const RecordsIntroScreen({this.onFinished, super.key});
 
-  final VoidCallback onFinished;
-
+  final VoidCallback? onFinished;
   @override
-  State<RecordsIntroScreen> createState() =>
-      _RecordsIntroScreenState();
+  State<RecordsIntroScreen> createState() => _RecordsIntroScreenState();
 }
 
-class _RecordsIntroScreenState
-    extends State<RecordsIntroScreen> {
+class _RecordsIntroScreenState extends State<RecordsIntroScreen> {
   static const List<String> _messages = [
     'Existe outra possibilidade.',
     'Se todas as palavras possíveis...',
@@ -30,20 +25,15 @@ class _RecordsIntroScreenState
     'Ser encontrada.',
   ];
 
-  static const Duration _initialBlackPause =
-      Duration(milliseconds: 900);
+  static const Duration _initialBlackPause = Duration(milliseconds: 900);
 
-  static const Duration _fadeDuration =
-      Duration(milliseconds: 1800);
+  static const Duration _fadeDuration = Duration(milliseconds: 1800);
 
-  static const Duration _visibleDuration =
-      Duration(milliseconds: 1700);
+  static const Duration _visibleDuration = Duration(milliseconds: 1700);
 
-  static const Duration _pauseBetweenMessages =
-      Duration(milliseconds: 850);
+  static const Duration _pauseBetweenMessages = Duration(milliseconds: 400);
 
-  static const Duration _finalBlackPause =
-      Duration(milliseconds: 1400);
+  static const Duration _finalBlackPause = Duration(milliseconds: 1400);
 
   String _currentMessage = '';
   bool _messageVisible = false;
@@ -85,7 +75,20 @@ class _RecordsIntroScreenState
       return;
     }
 
-    widget.onFinished();
+    if (widget.onFinished != null) {
+      widget.onFinished!.call();
+      return;
+    }
+
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder<void>(
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return const FirstRecordScreen();
+        },
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
   }
 
   Future<void> _showMessage(String message) async {
@@ -98,9 +101,7 @@ class _RecordsIntroScreenState
       _messageVisible = true;
     });
 
-    await Future<void>.delayed(
-      _fadeDuration + _visibleDuration,
-    );
+    await Future<void>.delayed(_fadeDuration + _visibleDuration);
 
     if (!mounted) {
       return;
@@ -110,27 +111,21 @@ class _RecordsIntroScreenState
       _messageVisible = false;
     });
 
-    await Future<void>.delayed(
-      _fadeDuration + _pauseBetweenMessages,
-    );
+    await Future<void>.delayed(_fadeDuration + _pauseBetweenMessages);
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.sizeOf(context).width;
 
-    final responsiveFontSize = (
-      screenWidth * 0.065
-    ).clamp(24.0, 30.0);
+    final responsiveFontSize = (screenWidth * 0.065).clamp(24.0, 30.0);
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 36,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 36),
             child: AnimatedOpacity(
               opacity: _messageVisible ? 1 : 0,
               duration: _fadeDuration,
@@ -138,18 +133,13 @@ class _RecordsIntroScreenState
               child: Text(
                 _currentMessage,
                 textAlign: TextAlign.center,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyLarge
-                    ?.copyWith(
-                      fontFamily: 'CookieFont',
-                      fontSize: responsiveFontSize,
-                      fontWeight: FontWeight.w400,
-                      height: 1.45,
-                      color: Colors.white.withValues(
-                        alpha: 0.92,
-                      ),
-                    ),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontFamily: 'CookieFont',
+                  fontSize: responsiveFontSize,
+                  fontWeight: FontWeight.w400,
+                  height: 1.45,
+                  color: Colors.white.withValues(alpha: 0.92),
+                ),
               ),
             ),
           ),

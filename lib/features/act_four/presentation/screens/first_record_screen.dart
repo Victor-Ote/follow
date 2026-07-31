@@ -40,7 +40,7 @@ class _FirstRecordScreenState extends State<FirstRecordScreen>
     WidgetsBinding.instance.addObserver(this);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _prepareScreen();
+      _startVisualEntrance();
     });
   }
 
@@ -73,6 +73,54 @@ class _FirstRecordScreenState extends State<FirstRecordScreen>
 
     if (returnedFromRecord) {
       _handleRecordReturn();
+    }
+  }
+
+  Future<void> _startVisualEntrance() async {
+    await Future<void>.delayed(_initialBlackPause);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _contentVisible = true;
+    });
+  }
+
+  Future<void> _loadRecordValue() async {
+    final assetPath = babeliaRecordsData.firstRecord.valueAssetPath;
+
+    try {
+      if (assetPath == null || assetPath.isEmpty) {
+        throw StateError(
+          'O primeiro registro não possui '
+          'um asset.',
+        );
+      }
+
+      final recordValue = await rootBundle.loadString(assetPath);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _recordValue = '${recordValue.length} caracteres carregados';
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _loadingError = error;
+      });
+
+      debugPrint(
+        'Erro ao carregar o primeiro '
+        'registro: $error',
+      );
     }
   }
 
@@ -125,7 +173,7 @@ class _FirstRecordScreenState extends State<FirstRecordScreen>
       }
 
       setState(() {
-        _recordValue = recordValue.trim();
+        _recordValue = '${recordValue.length} caracteres carregados';
       });
     } catch (error) {
       if (!mounted) {
@@ -149,31 +197,84 @@ class _FirstRecordScreenState extends State<FirstRecordScreen>
   }
 
   Future<void> _copyRecordValue() async {
-    final recordValue = _recordValue;
-
-    if (recordValue == null || recordValue.isEmpty || _recordCopied) {
+    if (_isOpeningRecord || _recordCopied) {
       return;
     }
 
-    await Clipboard.setData(ClipboardData(text: recordValue));
+    final assetPath = babeliaRecordsData.firstRecord.valueAssetPath;
 
-    if (!mounted) {
-      return;
-    }
+    if (assetPath == null || assetPath.isEmpty) {
+      setState(() {
+        _loadingError = StateError('O primeiro registro não possui um asset.');
+      });
 
-    setState(() {
-      _recordCopied = true;
-    });
-
-    await Future<void>.delayed(const Duration(seconds: 2));
-
-    if (!mounted) {
       return;
     }
 
     setState(() {
-      _recordCopied = false;
+      _isOpeningRecord = true;
+      _loadingError = null;
     });
+
+    try {
+      final copiedCharacterCount = await _copyAssetToClipboard(assetPath);
+
+      if (!mounted) {
+        return;
+      }
+
+      debugPrint(
+        'Registro copiado: '
+        '$copiedCharacterCount caracteres.',
+      );
+
+      setState(() {
+        _recordCopied = true;
+        _isOpeningRecord = false;
+      });
+
+      await Future<void>.delayed(const Duration(seconds: 2));
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _recordCopied = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isOpeningRecord = false;
+        _loadingError = error;
+      });
+
+      debugPrint(
+        'Erro ao copiar o registro completo: '
+        '$error',
+      );
+    }
+  }
+
+  Future<int> _copyAssetToClipboard(String assetPath) async {
+    /*
+   * O texto completo existe somente dentro
+   * deste método.
+   *
+   * Ele não é salvo no estado e nunca é
+   * enviado para um widget Text.
+   */
+    final completeRecord = (await rootBundle.loadString(
+      assetPath,
+      cache: false,
+    )).trim();
+
+    await Clipboard.setData(ClipboardData(text: completeRecord));
+
+    return completeRecord.length;
   }
 
   Future<void> _openFirstRecord() async {
@@ -252,10 +353,14 @@ class _FirstRecordScreenState extends State<FirstRecordScreen>
 
     final messageFontSize = (screenSize.width * 0.064).clamp(23.0, 29.0);
 
-    final displayedRecordValue = switch ((_recordValue, _loadingError)) {
-      (final String value, _) => value,
-      (_, final Object _) => 'Não foi possível carregar o registro.',
-      _ => 'Carregando...',
+    final displayedRecordValue = switch ((_isOpeningRecord, _loadingError)) {
+      (true, _) => 'Preparando a coordenada completa...',
+
+      (_, final Object _) => 'Não foi possível copiar a coordenada.',
+
+      _ =>
+        'Coordenada completa armazenada.\n'
+            'Toque no ícone para copiar.',
     };
 
     return Scaffold(
@@ -303,10 +408,7 @@ class _FirstRecordScreenState extends State<FirstRecordScreen>
                   title: babeliaRecordsData.firstRecord.title,
                   value: displayedRecordValue,
                   isCopied: _recordCopied,
-                  onCopy:
-                      _recordValue != null &&
-                          _recordValue!.isNotEmpty &&
-                          _loadingError == null
+                  onCopy: !_isOpeningRecord && _loadingError == null
                       ? _copyRecordValue
                       : null,
                 ),

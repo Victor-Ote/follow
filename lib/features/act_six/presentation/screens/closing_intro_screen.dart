@@ -222,7 +222,7 @@ class _ClosingIntroScreenState extends State<ClosingIntroScreen> {
       case _ClosingContentType.oneYear:
         return TextStyle(
           fontFamily: 'CookieFont',
-          fontSize: screenWidth < 380 ? 37 : 42,
+          fontSize: 32,
           fontWeight: FontWeight.w400,
           height: 1.55,
           color: Colors.white.withValues(alpha: 0.95),
@@ -231,7 +231,7 @@ class _ClosingIntroScreenState extends State<ClosingIntroScreen> {
       case _ClosingContentType.phrase:
         return TextStyle(
           fontFamily: 'CookieFont',
-          fontSize: screenWidth < 380 ? 31 : 35,
+          fontSize: 32,
           fontWeight: FontWeight.w400,
           height: 1.38,
           color: Colors.white.withValues(alpha: 0.92),

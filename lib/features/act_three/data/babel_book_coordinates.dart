@@ -17,10 +17,10 @@ class BabelBookCoordinates {
 }
 
 const babelBookCoordinates = BabelBookCoordinates(
-  libraryUrl: 'https://libraryofbabel.info/',
-  wall: '1',
-  shelf: '2',
-  volume: '3',
-  page: '4',
+  libraryUrl: 'https://libraryofbabel.info/browse.cgi',
+  wall: '3',
+  shelf: '3',
+  volume: '4',
+  page: '119',
   hexagonAssetPath: 'assets/data/babel_hexagon.txt',
 );

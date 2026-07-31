@@ -47,7 +47,7 @@ class _UniverseScreenState extends State<UniverseScreen>
 
   static const List<double> _twinkleCycleOptions = [1, 2, 3, 4, 5, 6];
 
-  static const double _universeEdgePadding = 580; //tamanho da borda do universo
+  static const double _universeEdgePadding = 50; //tamanho da borda do universo
 
   static const int _initialVisibleStarCount = 7;
 

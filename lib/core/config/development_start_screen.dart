@@ -15,4 +15,4 @@ enum DevelopmentStartScreen {
 }
 
 const DevelopmentStartScreen developmentStartScreen =
-    DevelopmentStartScreen.closingFinal;
+    DevelopmentStartScreen.firstRecord;

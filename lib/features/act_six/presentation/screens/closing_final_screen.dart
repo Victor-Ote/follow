@@ -343,7 +343,7 @@ class _ClosingFinalScreenState extends State<ClosingFinalScreen> {
  * serão adicionadas nas próximas etapas.
  */
                   Align(
-                    alignment: const Alignment(0, 0.80),
+                    alignment: const Alignment(0, 0.88),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -382,9 +382,9 @@ class _ClosingFinalScreenState extends State<ClosingFinalScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Container(
-                                width: 132,
-                                height: 1,
-                                color: Colors.white.withValues(alpha: 0.18),
+                                // width: 132,
+                                // height: 1,
+                                // color: Colors.white.withValues(alpha: 0.18),
                               ),
                               const SizedBox(height: 11),
                               Text(
