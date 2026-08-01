@@ -15,4 +15,4 @@ enum DevelopmentStartScreen {
 }
 
 const DevelopmentStartScreen developmentStartScreen =
-    DevelopmentStartScreen.firstRecord;
+    DevelopmentStartScreen.normalExperience;
